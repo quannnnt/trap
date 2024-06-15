@@ -7,8 +7,8 @@ export default function Home() {
 
   // ----------- state variables ----------- //
   //balance
-  const [bPlayer, setBPlayer] = useState(0)
-  const [bBet, setBBet] = useState(0)
+  const [bPlayer, setBPlayer] = useState(1350)
+  const [bBet, setBBet] = useState(10000)
 
   //deposit
   const [depositPlayer, setDepositPlayer] = useState(0)
@@ -38,7 +38,23 @@ export default function Home() {
   const thirdBlock = Array.from({ length: 12 }, (_, index) => index + 25)
   const rouletteOrder = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26]
   const [valuesBet, setValuesBet] = useState(Array.from({ length: 37 }, () => 0))
+  const [valuesBlends, setValuesBlends] = useState({})
+  /*
+  {
+    'st': 0,
+    'scd': 0,
+    'trd': 0
+  }
+  */
+  const [valuesColor, setValuesColor] = useState({})
+  /*
+  {
+    'even': 0,
+    'odd': 0
+  } 
+  */
 
+  // -------------------- dynamic funcs
   function addBalancePlayer() {
     if (!isNaN(depositPlayer))
       setBPlayer(depositPlayer);
@@ -48,6 +64,64 @@ export default function Home() {
       setBBet(depositBet);
   }
 
+  function putBet(selectedNumber: number) {
+    setBet(bet => bet + chip)
+    let oldValue = valuesBet[selectedNumber]
+    setValuesBet(unstArray => [
+      ...unstArray.slice(0, selectedNumber),
+      oldValue + chip,
+      ...unstArray.slice(selectedNumber + 1)
+    ])
+  }
+
+  function getRandomInt(min: number, max: number) {
+    const array = new Uint32Array(1);
+    window.crypto.getRandomValues(array);
+    const randomValue = array[0] / (2 ** 32 - 1);
+    return Math.floor(randomValue * (max - min + 1)) + min;
+  }
+
+  function checkWinners(spinNumber: number) {
+    let betWins = 0, playerWins = 0
+    valuesBet.map((value, number) => {
+      //win
+      if (value != 0 && number == spinNumber) {
+        //+ for player
+        playerWins += value
+      }
+      //loss
+      if (value != 0 && number != spinNumber) {
+        //+ for bet
+        betWins += value
+      }
+    })
+    return { 'bet': betWins, 'player': playerWins };
+  }
+
+  function spin() {
+    if (bet != 0) {
+      //take out bet
+      setBPlayer(oldBalance => oldBalance - bet)
+
+      //check winners
+      const spinNumber = getRandomInt(0, 36);
+      console.log(spinNumber);
+      let winsObj = checkWinners(spinNumber)
+
+      //payment
+      console.log(winsObj.bet, winsObj.player)
+      setBBet(oldBalance => oldBalance + winsObj.bet)
+      setBPlayer(oldBalance => oldBalance + winsObj.player)
+
+      //reset bets
+      setBet(0)
+      setValuesBet(oldArray => Array.from(oldArray, () => 0))
+      setValuesBlends({})
+      setValuesColor({})
+    }
+  }
+
+  // -------------------- appearance funcs
   function defineTokenColor(number: number) {
     let amountOfToken = valuesBet[number]
     if (amountOfToken < 5)
@@ -64,23 +138,14 @@ export default function Home() {
   }
   function defineNumberColor(number: number) {
     if (redNumbers.includes(number))
-      return 'red-600';
+      return 'bg-red-600';
     if (blackNumbers.includes(number))
-      return 'black';
-  }
-  function putBet(selectedNumber: number) {
-    setBet(bet => bet + chip)
-    let oldValue = valuesBet[selectedNumber]
-    setValuesBet(unstArray => [
-      ...unstArray.slice(0, selectedNumber),
-      oldValue + chip,
-      ...unstArray.slice(selectedNumber + 1)
-    ])
+      return 'bg-stone-900';
   }
 
   return (
     <main className="w-screen h-screen bg-zinc-800 text-zinc-50">
-      <section className="w-full h-1/6 flex justify-center items-center">
+      <section className="w-full h-1/6 flex justify-center items-center ">
         <div>
           <h1 className="text-2xl font-bold">Roulette</h1>
         </div>
@@ -96,7 +161,7 @@ export default function Home() {
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center bg-white gap-[1px] p-[1px]">
               <div className="w-10 h-[120px]">
-                <button key={0} className={`w-full h-full flex justify-center items-center bg-green-500`} onClick={
+                <button key={0} className={`w-full h-full flex justify-center items-center bg-green-500 hover:brightness-90`} onClick={
                   () => {
                     if (bPlayer >= bet + chip) {
                       putBet(0)
@@ -117,7 +182,7 @@ export default function Home() {
                   firstBlock.map((number) => {
                     let numberColor = defineNumberColor(number)
                     return (
-                      <button key={number} className={`w-[calc(25%-1px)] h-[calc(33%-1px)] flex justify-center items-center bg-${numberColor} `} onClick={
+                      <button key={number} className={`w-[calc(25%-1px)] h-[calc(33%-1px)] flex justify-center items-center ${numberColor} hover:brightness-90`} onClick={
                         () => {
                           if (bPlayer >= bet + chip) {
                             putBet(number)
@@ -141,7 +206,7 @@ export default function Home() {
                   secondBlock.map((number) => {
                     let numberColor = defineNumberColor(number)
                     return (
-                      <button key={number} className={`w-[calc(25%-1px)] h-[calc(33%-1px)] flex justify-center items-center bg-${numberColor}`} onClick={
+                      <button key={number} className={`w-[calc(25%-1px)] h-[calc(33%-1px)] flex justify-center items-center ${numberColor} hover:brightness-90`} onClick={
                         () => {
                           if (bPlayer >= bet + chip) {
                             putBet(number)
@@ -165,7 +230,7 @@ export default function Home() {
                   thirdBlock.map((number) => {
                     let numberColor = defineNumberColor(number)
                     return (
-                      <button key={number} className={`w-[calc(25%-1px)] h-[calc(33%-1px)] flex justify-center items-center bg-${numberColor}`} onClick={
+                      <button key={number} className={`w-[calc(25%-1px)] h-[calc(33%-1px)] flex justify-center items-center ${numberColor} hover:brightness-90`} onClick={
                         () => {
                           if (bPlayer >= bet + chip) {
                             putBet(number)
@@ -185,27 +250,27 @@ export default function Home() {
               </div>
             </div>
             <div className="flex justify-between items-center bg-opacity-25 bg-gray-400 rounded-full gap-2 p-2">
-              <button onClick={() => setChip(1)} className="flex justify-center items-center rounded-full">
+              <button onClick={() => setChip(1)} className="flex justify-center items-center rounded-full hover:brightness-90">
                 <PiPokerChipFill className="w-10 h-10 rounded-full bg-zinc-400" />
                 <p className="text-sm font-medium text-black absolute">1</p>
               </button>
-              <button onClick={() => setChip(5)} className="flex justify-center items-center rounded-full">
+              <button onClick={() => setChip(5)} className="flex justify-center items-center rounded-full hover:brightness-90">
                 <PiPokerChipFill className="w-10 h-10 rounded-full bg-cyan-500" />
                 <p className="text-sm font-medium text-black absolute">5</p>
               </button>
-              <button onClick={() => setChip(10)} className="flex justify-center items-center rounded-full">
+              <button onClick={() => setChip(10)} className="flex justify-center items-center rounded-full hover:brightness-90">
                 <PiPokerChipFill className="w-10 h-10 rounded-full bg-orange-500" />
                 <p className="text-sm font-medium text-black absolute">10</p>
               </button>
-              <button onClick={() => setChip(25)} className="flex justify-center items-center rounded-full">
+              <button onClick={() => setChip(25)} className="flex justify-center items-center rounded-full hover:brightness-90">
                 <PiPokerChipFill className="w-10 h-10 rounded-full bg-red-600" />
                 <p className="text-sm font-medium text-black absolute">25</p>
               </button>
-              <button onClick={() => setChip(50)} className="flex justify-center items-center rounded-full">
+              <button onClick={() => setChip(50)} className="flex justify-center items-center rounded-full hover:brightness-90">
                 <PiPokerChipFill className="w-10 h-10 rounded-full bg-green-600" />
                 <p className="text-sm font-medium text-black absolute">50</p>
               </button>
-              <button onClick={() => setChip(100)} className="flex justify-center items-center rounded-full">
+              <button onClick={() => setChip(100)} className="flex justify-center items-center rounded-full hover:brightness-90">
                 <PiPokerChipFill className="w-10 h-10 rounded-full bg-violet-600" />
                 <p className="text-xs font-medium text-black absolute">100</p>
               </button>
@@ -215,7 +280,7 @@ export default function Home() {
               <p>Total Bet: {bet}</p>
             </div>
             <div className="flex gap-2">
-              <button className="py-1 px-4 rounded bg-green-500">Play</button>
+              <button className="py-1 px-4 rounded bg-green-500" onClick={spin}>Play</button>
               <button className="py-1 px-4 rounded bg-indigo-500" onClick={
                 () => {
                   setValuesBet(oldArray => Array.from(oldArray, () => 0))
