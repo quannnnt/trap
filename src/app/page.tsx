@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import { PiPokerChipFill } from "react-icons/pi";
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from "chart.js";
+import { Line, Bar } from "react-chartjs-2";
 
 export default function Home() {
+
+  ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
   // ----------- state variables ----------- //
   //balance
@@ -14,17 +18,14 @@ export default function Home() {
   const [depositPlayer, setDepositPlayer] = useState(0)
   const [depositBet, setDepositBet] = useState(0)
 
+  //history of raffled numbers
+  const [numberHistory, setNumberHistory] = useState([])
+
   //value of winnings and history of wins
   const [winPlayer, setWinPlayer] = useState(0)
   const [winBet, setWinBet] = useState(0)
-  const [winHistoryPlayer, setWinHistoryPlayer] = useState([])
+  const [winHistoryPlayer, setWinHistoryPlayer] = useState([0, -10, 10])
   const [winHistoryBet, setWinHistoryBet] = useState([])
-
-  //value of losses and history of loss
-  const [lossPlayer, setLossPlayer] = useState(0)
-  const [lossBet, setLossBet] = useState(0)
-  const [lossHistoryPlayer, setLossHistoryPlayer] = useState([])
-  const [lossHistoryBet, setLossHistoryBet] = useState([])
 
   //value bet
   const [bet, setBet] = useState(0)
@@ -57,11 +58,11 @@ export default function Home() {
   // -------------------- dynamic funcs
   function addBalancePlayer() {
     if (!isNaN(depositPlayer))
-      setBPlayer(depositPlayer);
+      setBPlayer(value => value + depositPlayer);
   }
   function addBalanceBet() {
     if (!isNaN(depositBet))
-      setBBet(depositBet);
+      setBBet(value => value + depositBet);
   }
 
   function putBet(selectedNumber: number) {
@@ -87,7 +88,7 @@ export default function Home() {
       //win
       if (value != 0 && number == spinNumber) {
         //+ for player
-        playerWins += value
+        playerWins += value * 36
       }
       //loss
       if (value != 0 && number != spinNumber) {
@@ -107,6 +108,9 @@ export default function Home() {
       const spinNumber = getRandomInt(0, 36);
       console.log(spinNumber);
       let winsObj = checkWinners(spinNumber)
+
+      //log number
+      setNumberHistory(oldArray => [...oldArray, spinNumber])
 
       //payment
       console.log(winsObj.bet, winsObj.player)
@@ -144,17 +148,27 @@ export default function Home() {
   }
 
   return (
-    <main className="w-screen h-screen bg-zinc-800 text-zinc-50">
-      <section className="w-full h-1/6 flex justify-center items-center ">
+    <main className="min-w-min w-screen h-screen bg-zinc-800 text-zinc-50 overflow-auto">
+      <section className="w-full h-1/6 flex justify-center items-center" >
         <div>
           <h1 className="text-2xl font-bold">Roulette</h1>
         </div>
       </section>
-      <section className="w-full h-5/6 flex justify-between items-center py-5 px-10 gap-3">
-        <div className="w-3/5 h-full flex justify-center items-start gap-8">
+      <section className="w-full h-5/6 flex justify-center items-center py-5 px-8 gap-8">
+        <div className="h-full flex justify-center items-start gap-8">
           <div className="flex flex-col gap-4">
             <div className="w-40 h-40 bg-orange-500 rounded-full" />
-            <div className="w-40 h-10 bg-cyan-500" />
+            <div className="w-40 h-10  overflow-x-auto scroll scrollbar-hidden bg-gray-50 bg-opacity-15">
+              <div className="w-fit flex flex-row-reverse justify-end gap-1 p-1">
+                {numberHistory.map((numberRaffled, index) => {
+                  return (
+                    <div className={`flex-shrink-0 w-8 h-8 flex justify-center items-center ${redNumbers.includes(numberRaffled) ? 'bg-red-500' : blackNumbers.includes(numberRaffled) ? 'bg-black' : 'bg-green-500'}`} key={`raff${index}`}>
+                      {numberRaffled}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </div>
 
 
@@ -291,13 +305,12 @@ export default function Home() {
         </div>
 
 
-        <div className="w-1/5 h-full flex flex-col justify-start gap-8">
+        <div className="h-full flex flex-col justify-start gap-8">
           <div className="w-full flex flex-col gap-2">
             <h1 className="font-semibold">Bet</h1>
             <div className="w-full flex flex-col gap-1 items-start">
               <p>Balance: {bBet}</p>
               <p>Winnings: {winBet}</p>
-              <p>Losses: {lossBet}</p>
             </div>
             <div className="flex gap-1 text-black text-sm">
               <input type="text" name="depositBet" id="depositBet" className="px-1" onKeyDown={
@@ -320,7 +333,6 @@ export default function Home() {
             <div className="w-full flex flex-col gap-1 items-start">
               <p>Balance: {bPlayer}</p>
               <p>Winnings: {winPlayer}</p>
-              <p>Losses: {lossPlayer}</p>
             </div>
             <div className="flex gap-1 text-black text-sm">
               <input type="text" name="depositPlayer" id="depositPlayer" className="px-1" onKeyDown={
@@ -341,8 +353,14 @@ export default function Home() {
         </div>
 
 
-        <div className="w-1/5 h-full flex flex-col justify-start"></div>
+        <div className="h-full flex flex-col gap-4">
+          <div className="w-64 h-64 bg-emerald-500">
+
+          </div>
+          <div className="w-64 h-64 bg-emerald-500">
+          </div>
+        </div>
       </section>
-    </main>
+    </main >
   );
 }
