@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #44464B;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #27272a;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #44464B;
+  border-radius: 20px;
+  border: 3px solid #27272a;
+}
+
+button {
+  user-select: none;
+}
+
 .scrollbar-hidden {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -9,4 +32,14 @@
 
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
+}
+
+.piece {
+  transform-origin: bottom right;
+  transform: rotate(calc(9.75deg * var(--index)));
+  clip-path: polygon(0% 0%, 15% 0%, 100% 100%, 0 15%);
+}
+
+.ball {
+  transition: transform 3s ease;
 }
